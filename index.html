@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Drawing</title>
+  <style>
+    body {
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="drawingSurface"></canvas>
+
+  <script>
+    const canvas = document.getElementById('drawingSurface')
+    canvas.width = window.innerWidth
+    canvas.height = window.innerHeight
+    const context = canvas.getContext('2d')
+
+    let isFirstDraw = true
+    let x
+    let y
+
+    async function main() {
+      const midiAccess = await navigator.requestMIDIAccess()
+      const input = Array.from(midiAccess.inputs.values())[1]
+      console.log(input)
+      input.addEventListener('midimessage', function (event) {
+        const data = event.data
+        if (data[0] === 177) {
+          if (data[1] === 47) {
+            x = (data[2] / 127) * canvas.width
+            draw()
+          } else if (data[1] === 48) {
+            y = (1 - (data[2] / 127)) * canvas.height
+            draw()
+          }
+        }
+      })
+    }
+
+    function draw() {
+      if (typeof x === 'number' && typeof y === 'number') {
+        if (isFirstDraw) {
+          context.moveTo(x, y)
+          isFirstDraw = false
+        }
+        context.lineTo(x, y)
+        context.stroke()
+      }
+    }
+
+    main()
+  </script>
+</body>
+</html>
